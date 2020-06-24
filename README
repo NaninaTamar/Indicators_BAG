@@ -1,0 +1,4 @@
+simulation.R contains code for simulation COVD19
+setup.R contains several R-functions
+main.R defines different indicators and studies sens,spec,ROC,AUC and thresholds
+application_to_data.R applies indicator and thresholds to BAG data
