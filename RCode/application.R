@@ -1,5 +1,5 @@
 
-cases_agg <- readRDS("cases_June22.RDS") %>% 
+cases_agg <- readRDS("../Data/cases_June22.RDS") %>% 
   group_by(report_dt) %>%
   tally() %>%
   mutate(lag1=lag(n,1,default = 0), 
