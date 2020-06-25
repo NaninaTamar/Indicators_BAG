@@ -262,6 +262,17 @@ roc16 = get_roc(data=sim_out,response="R0",predictor="numb_7day_av_greater_abs10
 plot_allR(roc = roc16) + ggtitle("7-day mean greater than how many cases of prev. 10 days")
 plot_specificR(roc = roc16, R0spec = 1) + ggtitle("7-day mean greater than how many cases of prev. 10 days, R=1")
 
+
+
+## Idea 17: Moving 7-day average:
+
+roc17 = get_roc(data=sim_out,response="R0",predictor="seven_day_average")
+
+plot_allR(roc = roc17) + ggtitle("Moving 7-day average")
+# plot_specificR(roc = roc17, R0spec = 1) + ggtitle("Moving 7-day average, R=1")
+
+
+
 ## average of reported cases:
 
 reported <- sim_out %>%
