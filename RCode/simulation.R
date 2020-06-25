@@ -86,5 +86,5 @@ sim_cases[[i]] <- contr
 
 end_time <- Sys.time()
 # save
-saveRDS(sim_cases, "sim_data2.rds")
+saveRDS(sim_cases, "../Data/sim_data2.rds")
 
