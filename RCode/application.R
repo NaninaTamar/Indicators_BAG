@@ -105,7 +105,7 @@ ggplot(cases_agg, aes(x=report_dt)) +
 #### by cantons
 
 
-cases_agg_ktn <- readRDS("cases_June22.RDS") %>% 
+cases_agg_ktn <- readRDS("../Data/cases_June22.RDS") %>% 
   group_by(ktn, report_dt) %>%
   tally() %>%
   mutate(lag1=lag(n,1,default = 0), 
