@@ -1,5 +1,5 @@
 ## Setup
-source("setup_NA.R")
+source("setup.R")
 sim_data = readRDS("../Data/sim_data2.rds")
 
 ## Data management
