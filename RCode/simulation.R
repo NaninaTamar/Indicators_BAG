@@ -7,8 +7,11 @@
 # prepare controls
 require(tidyverse)
 
+# contr = expand.grid(R0=seq(from=0.4,to=1.6, by=0.2),
+#                     seed=seq(from=10, to=90, by=20), 
+#                     p=seq(from=0.1, to=0.50, by=0.2))
 contr = expand.grid(R0=seq(from=0.4,to=1.6, by=0.2),
-                    seed=seq(from=10, to=90, by=20), 
+                    seed=seq(from=150, to=450, by=50), 
                     p=seq(from=0.1, to=0.50, by=0.2))
 
 nsim = dim(contr)[[1]]
@@ -86,5 +89,5 @@ sim_cases[[i]] <- contr
 
 end_time <- Sys.time()
 # save
-saveRDS(sim_cases, "../Data/sim_data2.rds")
+# saveRDS(sim_cases, "../Data/sim_data2b.rds")
 
