@@ -1,0 +1,211 @@
+---
+title: "Indicators to detect trends in the COVID-19 epidemic"
+author: "Nanina Anderegg & Julien Riou"
+date: "01 July 2020"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE, mesasge=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(kableExtra)
+theme_set(theme_bw())
+load("../Data/application_plots.rda")
+load("../Data/report_roc_plots.rda")
+```
+
+# Introduction 
+
+## Background & Motivation
+
+There is great demand to interpret trends of the SARS-CoV-2 epidemic with the available data on reported cases. As we do not know the true number of all infections but only the reported number of positive tests, interpreting trends solely by this data is difficult. An increase or decrease in cases reported might indicate a real increase in the total number of people infected but could also be solely due to an increase in testing or to stochasticity. The COVID-19 epidemic and data collection contains several properties that make interpreting the raw numbers difficult. These include 
+
+* **Changes in testing strategy:** As not always all people with symptoms were *allowed* to get tested, the proportion of infected cases that is tested might change and thus will the number of reported cases. 
+* **Superspreding/Dispersion:** Superspreading seems to play an important role in the current epidemic. Studies have estimated the dispertion parameter $k=0.1$, meaning that 10\% of the infected people is responsible for 80\% of secondary cases. If number of reported cases are high superspreading does not play such a big role for interpreting data, because it will average out. But if number of reported cases are low, superspreading makes it hard to interprete an increase in cases as day-to-day variations cannot be directly attributed to underlying trends in transmission.
+* **Delays:** The delays from infection to symptoms and from symptoms to testing also have to be taken into account as well. 
+
+
+
+ 
+## Aim 
+
+With this small analysis, we study how well different indicators (and different cutoffs for these indicators) are working do detect an increase ($R_e \geq 1$). We do so trying to account for the issues mentioned above (Superspreading, Dealys, Testing strategy).  
+
+
+## Idea
+
+* Simulate COVID-19 epidemic with different $R_e$ (ranging from below to above 1) and under different conditions (number of initial cases, proportion of infected people getting tested), accounting for superspreading.
+* Examine different indicators to determine how well they work to predict if $R_e$ is really above 1.
+
+
+*Example:* Indicator could be the **absolute increase in reported cases compared to the day before**. We then look at the distribution of this indicator for all simulations with $R_e \geq 1$. The same we do for all simulations with $R_e < 1$. Then we can compare the distributions for $R_e \geq 1$ and $R_e <1$ to see if they are very similar or differ. With this we can determine
+
+* how well the indicator works to predict if $R_e\geq1$
+* "the best" threshold for this indicator to predict if $R_e\geq 1$
+
+
+
+# Simulation 
+
+For the simulations we assumed the following delays and distributions: 
+
+* Number of secondary cases $\sim$ *Negative Binomial* with dispersion parameter 0.1 (in order to account for superspreading) 
+* Number of reported cases $\sim$ *Binom(number infected, p)*
+* Time from infection of initial case to infection of secondary case $\sim \Gamma \left(2, 2.5 \right)$ 
+* Time from infection to symptoms $\sim  \Gamma  \left(2, 2.5 \right)$
+* Time from symptoms to reported positive test $\sim \Gamma  \left(2, 1.5 \right)$
+
+
+Under these assumptions we simulated different COVID-19 epidemics. For each combination of 
+
+* $R_e$ = 0.4; 0.6; 0.8; 1; 1.2; 1.4; 1.6
+* p = reported cases / infected cases = 0.1; 0.3; 0.5
+* seed = inital number of cases = 10; 50; 90; 150; 200; 250
+
+we simulated 100 runs. For each run we simulated 60 days into the epidemic and the output of each simulation was the daily number of **reported** cases (day 0 to day 60). 
+
+# Indicators
+
+We have studied the following indicators 
+
+* Absolute 1-day increase
+* Relative increase 
+      * within 1-day
+      * compared to preceding 5-day average
+* Proportional increase
+      * within 1-day
+      * compared to preceding 7-day average
+* Number of day-to-day increases 
+      * in the last 5 days
+      * in the last 7 days 
+      * in the last 10 days
+* Number of times the reported number of cases is larger than the number of reported cases in the 
+      * previous 10 day
+      * previous 7 days
+* Number of times the 3-day-average of reported cases is larger than the number of cases reported in the previous 10 days. 
+* Number of times that the minimum (and the maxium) of the last three days is larger than the number of reported cases the previous day
+* Number of times the 7-day median is larger than the number of reported cases the previous 
+      * 7 days
+      * 10 days
+* Number of times the 7-day average is larger than the number of reported cases the previous 
+      * 7 days
+      * 10 days
+
+For all these indicators we used day 15 to 30 to estimate sensitivity and specificity. We plotted the ROC curve and calcuated the AUC. For all indicators we calculated thresholds (cutoffs) using Youden's index (maximizing the sum of senistivity and specificity) as well as the minimal distance cutoff. 
+
+
+# Results
+
+The following shows the trajectories of the simulated epidemics. On top are the different seeds (initial number of infected cases) and on the right the thesting proportion. The different $R_e$ are represented by the different colors. 
+
+```{r, fig.width=10, fig.height=12, warning=FALSE, message=FALSE, echo=FALSE}
+trajectories_tot
+```
+
+
+
+
+## Examples
+
+In the following we will illustrate the results with two different examples. One indicator which does not work that well and another one which works relatively well. 
+
+### Indicator 1: Absolute 1-day increase
+
+
+First we look at the indicator **absolute 1-day incrase**.
+
+Below are estimated sensitivities and specificities stratified by the testing proportion and differen seeds. On the curves are the two thresholds by Youden and minimal distance plottedd in red and yellow. 
+
+
+```{r, echo=FALSE, fig.width=10, fig.height=10, message = FALSE, warning=FALSE}
+p1
+```
+
+We can see that this indicator does not work well to determine if $R_e \geq 1$. The AUC is on average `r  paste(round(100*mean(roc1tot$auc[roc1tot$R0==1])),"%", sep="")` and in the best case `r paste(round(100*max(roc1tot$auc[roc1tot$R0==1])), "%",sep="")`. From the ROC we can also see that we are not doing much better than tossing a coin.  
+
+
+Next we will look how this index looks like if we apply it to the FOPH data. For the threshold we have taken 2.5, as it was chosen often as Youden's index. Taking the threshold of 2.5 means that if we see an absolute increase of 3 or more we will decide that $R_e\geq1$ and if we see an absolute increase of 2 or less we decide that $R_e<1$. 
+
+```{r, echo=FALSE, fig.width=10, fig.height=8, message = FALSE, warning=FALSE}
+app1
+```
+
+As expected, this index and threshold does not capture the epidemic in Switzerland very well. 
+
+
+## Indicator 2: Number of times the 3-day average is larger then the number of cases reported in the previous 10 days
+
+As a next example we look at another index. For this index we calculate the 3-day average of reported cases and count how often this average is larger than the number of reported cases in the 10 days before. 
+
+
+The following shows the sensitivity and specificity for this index. The different thresholds corresponding to these sensitivities and specificities are plotted along the lines (again Youden's index is in red and minimal distance in yellow). 
+
+```{r, echo=FALSE, fig.width=10, fig.height=10, message = FALSE, warning=FALSE}
+p4
+```
+
+We can see that this index is working better regarding AUC. If we have a very low number of seed (10) it does not work too well, but for higher seeds it seems to work fairly well. 
+
+
+Let's again apply this to the FOPH data. For this we have chosen a cutoff of 6.5 which is a bit more conservative than Youden's index and minimal distance. One can do so in order to increase specificity so that the probability of raising a false alarm is small. Taking this cutoff corresponds to the following rule: if the 3-day average is larger than 7 of the previous 10 reported numbers we decide that $R_e\geq 1$. If it is only larger than 6 or less of the previous 10 reported numbers we decide that $R_e<1$.
+
+The sensitivity for this cutoff looks the following:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+sens <- roc11_tot$se[roc11_tot$thresholds==6.5 & roc11_tot$R0==1]
+spe <- roc11_tot$sp[roc11_tot$thresholds==6.5 & roc11_tot$R0==1]
+pro <- roc11_tot$p[roc11_tot$thresholds==6.5 & roc11_tot$R0==1]
+seed <- roc11_tot$seed[roc11_tot$thresholds==6.5 & roc11_tot$R0==1]
+
+
+sens_dat <- cbind(sens[1:6], sens[7:12], sens[13:18])
+spec_dat <- cbind(spe[1:6], spe[7:12], spe[13:18])
+
+sens_dat <- data.frame(sens_dat)
+spec_dat <- data.frame(spec_dat)
+
+rownames(sens_dat) <- c("10", "50", "90", "150", "200", "250")
+rownames(spec_dat) <- c("10", "50", "90", "150", "200", "250")
+
+sens_dat <- round(100*sens_dat)
+spec_dat <- round(100*spec_dat)
+
+names(sens_dat) <- c("0.1", "0.3", "0.5")
+names(spec_dat) <- c("0.1", "0.3", "0.5")
+
+sens_dat %>%
+  kable() %>%
+  kable_styling()
+
+```
+
+This means that for example with a seed of 150 and a testing probability of 30\% we have a 73\% chance to detect $R_e\geq 1$ if it really is the case in reality. 
+
+The corresponding numbers for specificity are 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+spec_dat %>%
+  kable() %>%
+  kable_styling()
+
+
+```
+
+With the example of a seed of 150 and a testing probability of 30\% taking a cutoff of 6.5 for this index yields a 93\% chance of deciding that $R_e<1$ when this really is the case. 
+
+If we apply this indicator and cutoff to the FOPH data we get the following image. 
+
+```{r, echo=FALSE,  fig.width=10, fig.height=8, message = FALSE, warning=FALSE}
+app5
+```
+
+# Conclusion
+
+Our simulation is useful to study how good different indicators might work to interprete changes in reported number of cases. However, it also shows that at low numbers of cases and low testing probabilities it is hard to tell anything about the true underlying epidemic. 
+
+

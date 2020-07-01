@@ -97,3 +97,31 @@ plot_specificR <- function(roc, R0spec){
 }
   
 
+plot_specificR_without_text <- function(roc, R0spec){
+  tbl_df(roc) %>%
+    group_by(R0,p,seed) %>%
+    filter(R0==R0spec) %>%
+    mutate(sim=group_indices(),
+           youdan_cutoff=max(youdan),
+           distance_cutoff=min(dist),
+           auc_text=ifelse(thresholds==Inf & R0==1,paste0("AUC: ", round(auc*100),"% (",round(auc_low*100),"-",round(auc_high*100),")"),""),
+           youden_text=ifelse(R0==1 & youdan==youdan_cutoff, paste0("Youden cut-off: ",  thresholds, sep=""),""),
+           youden_sesp_text=ifelse(R0==1 & youdan==youdan_cutoff, paste0(" (Se: ", round(se*100), "%, Sp: ", round(sp*100), "%)", sep=""), ""),
+           dist_text=ifelse(R0==1 & dist==distance_cutoff, paste0("Distance cut-off: ",  thresholds, sep=""),""),
+           dist_sesp_text=ifelse(R0==1 & dist==distance_cutoff, paste0(" (Se: ", round(se*100), "%, Sp: ", round(sp*100), "%)", sep=""), ""),
+           text_total = paste0(auc_text, "\n", youden_text, youden_sesp_text, "\n",
+                               dist_text, dist_sesp_text, sep="")) %>%
+    ggplot() +
+    geom_line(aes(x=1-sp,y=se,group=sim, colour=factor(R0)), size=1) +
+    geom_text(aes(x=.6,y=.3,label=text_total),size=3) +
+    geom_text(aes(x=1-sp, y=se, label=thresholds, 
+                   colour=ifelse(youdan==youdan_cutoff, "2", ifelse(dist==distance_cutoff, "3",NA)))) + 
+    facet_grid(seed~p) +
+    #scale_colour_gradient(low="green",high="tomato") +
+    geom_segment(x=0,y=0,xend=1,yend=1,linetype=2,color="grey",size=.2) +
+    coord_cartesian(xlim=c(0,1),ylim=c(0,1)) +
+    scale_x_continuous(labels=function(x) paste0((1-x)*100,"%"),breaks=c(0,0.25,.5,.75,1)) +
+    scale_y_continuous(labels=scales::percent) +
+    scale_color_manual(values = c("forestgreen","red","orange","black"),guide=FALSE) +
+    labs(x="Specificity",y="Sensitivity",colour="R")
+}
